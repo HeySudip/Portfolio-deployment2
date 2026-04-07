@@ -140,6 +140,8 @@ export default function AdminPanel({ onNavigateBack }: { onNavigateBack: () => v
       degree: "",
       period: "",
       gpa: "",
+      gpaType: "GPA",
+      gpaOutOf: "4.0",
     };
     setData({ ...data, education: [...data.education, newEdu] });
   };
@@ -331,6 +333,42 @@ export default function AdminPanel({ onNavigateBack }: { onNavigateBack: () => v
               </div>
             </SectionCard>
 
+            <SectionCard title="Layout Style">
+              <p className="text-xs font-mono mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>
+                Choose how your name and title appear
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setData({ ...data, layoutStyle: "title-big" })}
+                  className="p-4 rounded-xl text-left transition-all"
+                  style={{
+                    backgroundColor: (data.layoutStyle === "title-big" || !data.layoutStyle) ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.03)",
+                    border: (data.layoutStyle === "title-big" || !data.layoutStyle) ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <p className="text-[10px] font-mono mb-1.5" style={{ color: "rgba(255,255,255,0.35)" }}>hi, i'm sudip</p>
+                  <p className="text-sm font-black" style={{ color: "#ffffff" }}>CREATIVE DEV</p>
+                  <p className="text-[10px] font-mono mt-2" style={{ color: (data.layoutStyle === "title-big" || !data.layoutStyle) ? "#22c55e" : "rgba(255,255,255,0.3)" }}>
+                    {(data.layoutStyle === "title-big" || !data.layoutStyle) ? "✓ Selected" : "Option B"}
+                  </p>
+                </button>
+                <button
+                  onClick={() => setData({ ...data, layoutStyle: "name-big" })}
+                  className="p-4 rounded-xl text-left transition-all"
+                  style={{
+                    backgroundColor: data.layoutStyle === "name-big" ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.03)",
+                    border: data.layoutStyle === "name-big" ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <p className="text-sm font-black" style={{ color: "#ffffff" }}>Sudip</p>
+                  <p className="text-[10px] font-mono mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>Creative Developer</p>
+                  <p className="text-[10px] font-mono mt-2" style={{ color: data.layoutStyle === "name-big" ? "#22c55e" : "rgba(255,255,255,0.3)" }}>
+                    {data.layoutStyle === "name-big" ? "✓ Selected" : "Option A"}
+                  </p>
+                </button>
+              </div>
+            </SectionCard>
+
             <SectionCard title="Skills">
               <TagInput
                 tags={data.skills}
@@ -450,10 +488,32 @@ export default function AdminPanel({ onNavigateBack }: { onNavigateBack: () => v
                     placeholder="e.g. 2022 — 2026"
                   />
                   <InputField
-                    label="GPA"
+                    label="Score"
                     value={edu.gpa}
                     onChange={(v) => updateEducation(edu.id, "gpa", v)}
-                    placeholder="e.g. 3.9/4.0"
+                    placeholder="e.g. 8.5"
+                  />
+                  <div>
+                    <label className="block text-xs font-mono mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Type</label>
+                    <select
+                      value={edu.gpaType || "GPA"}
+                      onChange={(e) => updateEducation(edu.id, "gpaType", e.target.value)}
+                      className="w-full text-sm px-3 py-2 rounded-lg outline-none"
+                      style={{
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "#ffffff",
+                      }}
+                    >
+                      <option value="GPA" style={{ backgroundColor: "#111113" }}>GPA</option>
+                      <option value="CGPA" style={{ backgroundColor: "#111113" }}>CGPA</option>
+                    </select>
+                  </div>
+                  <InputField
+                    label="Out of"
+                    value={edu.gpaOutOf || "4.0"}
+                    onChange={(v) => updateEducation(edu.id, "gpaOutOf", v)}
+                    placeholder="e.g. 4.0 or 10"
                   />
                 </div>
               </SectionCard>
@@ -535,8 +595,47 @@ export default function AdminPanel({ onNavigateBack }: { onNavigateBack: () => v
             <TagInput
               tags={data.techStack}
               onChange={(tags) => setData({ ...data, techStack: tags })}
-              placeholder="Add technology..."
+              placeholder="Type & press Enter to add..."
             />
+            <div className="mt-4">
+              <p className="text-xs font-mono mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>
+                Quick add — click to toggle:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "React", "Next.js", "Vue.js", "Angular", "Svelte",
+                  "TypeScript", "JavaScript", "Python", "Go", "Rust", "Java", "C++", "C#", "PHP", "Ruby",
+                  "Node.js", "Express", "FastAPI", "Django", "Laravel",
+                  "PostgreSQL", "MongoDB", "MySQL", "Redis", "Supabase", "Firebase",
+                  "Docker", "Kubernetes", "AWS", "GCP", "Azure", "Vercel", "Netlify",
+                  "Git", "Linux", "Figma", "TailwindCSS", "GraphQL", "REST API",
+                  "React Native", "Flutter", "Swift", "Kotlin",
+                  "TensorFlow", "PyTorch", "Pandas", "NumPy",
+                ].map((tech) => {
+                  const isAdded = data.techStack.includes(tech);
+                  return (
+                    <button
+                      key={tech}
+                      onClick={() => {
+                        if (isAdded) {
+                          setData({ ...data, techStack: data.techStack.filter((t) => t !== tech) });
+                        } else {
+                          setData({ ...data, techStack: [...data.techStack, tech] });
+                        }
+                      }}
+                      className="text-xs font-mono px-3 py-1.5 rounded-lg transition-all duration-200"
+                      style={{
+                        backgroundColor: isAdded ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.04)",
+                        color: isAdded ? "#22c55e" : "rgba(255,255,255,0.45)",
+                        border: isAdded ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                      }}
+                    >
+                      {isAdded ? "✓ " : ""}{tech}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </SectionCard>
         )}
 
