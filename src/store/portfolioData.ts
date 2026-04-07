@@ -32,6 +32,8 @@ export interface Education {
   degree: string;
   period: string;
   gpa: string;
+  gpaType: "GPA" | "CGPA";
+  gpaOutOf: string;
 }
 
 export interface PortfolioData {
@@ -48,6 +50,7 @@ export interface PortfolioData {
   experience: Experience[];
   education: Education[];
   techStack: string[];
+  layoutStyle: "name-big" | "title-big";
 }
 
 export const defaultData: PortfolioData = {
@@ -100,9 +103,12 @@ export const defaultData: PortfolioData = {
       institution: "Stanford University",
       degree: "B.S. in Computer Science",
       period: "2022 — 2026",
-      gpa: "3.9/4.0",
+      gpa: "3.9",
+      gpaType: "GPA",
+      gpaOutOf: "4.0",
     },
   ],
+  layoutStyle: "title-big",
   techStack: [
     "React", "Next.js", "TypeScript", "Node.js", "Python", "Go", "Rust",
     "PostgreSQL", "MongoDB", "Redis", "Docker", "Kubernetes", "AWS", "Figma"
