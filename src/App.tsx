@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Portfolio from "./components/Portfolio";
 import AdminPanel from "./components/AdminPanel";
+import ChatWidget from "./components/ChatWidget";
 
 type View = "portfolio" | "admin";
 
@@ -36,5 +37,10 @@ export default function App() {
   }
 
   // Only show admin button if isAdmin (accessed via secret URL)
-  return <Portfolio key={view} onNavigateAdmin={isAdmin ? () => setView("admin") : undefined} />;
+  return (
+    <>
+      <Portfolio key={view} onNavigateAdmin={isAdmin ? () => setView("admin") : undefined} />
+      <ChatWidget />
+    </>
+  );
 }
