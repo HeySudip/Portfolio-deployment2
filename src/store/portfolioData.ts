@@ -1,3 +1,6 @@
+import { supabase } from "./supabase";
+import avatarImg from "../assets/avatar.jpg";
+
 export interface SocialLink {
   platform: string;
   url: string;
@@ -47,8 +50,6 @@ export interface PortfolioData {
   techStack: string[];
 }
 
-import avatarImg from "../assets/avatar.jpg";
-
 export const defaultData: PortfolioData = {
   name: "Alex Chen",
   title: "CREATIVE DEVELOPER",
@@ -81,22 +82,6 @@ export const defaultData: PortfolioData = {
       link: "#",
       github: "#",
     },
-    {
-      id: "3",
-      title: "Sentinel — Infrastructure Monitoring",
-      description: "real-time system monitoring with anomaly detection. processes 100k+ events/sec with sub-ms latency.",
-      tags: ["GO", "K8S"],
-      link: "#",
-      github: "#",
-    },
-    {
-      id: "4",
-      title: "PixelMind — Generative Art Engine",
-      description: "create stunning AI-powered artwork using diffusion models with custom fine-tuning on personal style datasets.",
-      tags: ["AI", "REACT"],
-      link: "#",
-      github: "#",
-    },
   ],
   experience: [
     {
@@ -107,15 +92,6 @@ export const defaultData: PortfolioData = {
       location: "Remote",
       description: "Built microservices handling 50k+ requests/min. Optimized database queries resulting in 40% latency reduction.",
       tags: ["Go", "PostgreSQL", "gRPC", "Docker"],
-    },
-    {
-      id: "2",
-      company: "StartupXYZ",
-      role: "Full Stack Developer",
-      period: "Jan 2025 — May 2025",
-      location: "San Francisco, CA",
-      description: "Developed real-time collaboration features using WebSockets. Built responsive UI components with React and Framer Motion.",
-      tags: ["React", "Node.js", "Socket.io", "MongoDB"],
     },
   ],
   education: [
@@ -133,28 +109,37 @@ export const defaultData: PortfolioData = {
   ],
 };
 
-const STORAGE_KEY = "portfolio_data";
+const TABLE = "portfolio";
+const ROW_ID = 1;
 
-export function getPortfolioData(): PortfolioData {
+export async function getPortfolioData(): Promise<PortfolioData> {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error("Failed to load portfolio data:", e);
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select("data")
+      .eq("id", ROW_ID)
+      .single();
+
+    if (error || !data) return defaultData;
+    return data.data as PortfolioData;
+  } catch {
+    return defaultData;
   }
-  return defaultData;
 }
 
-export function savePortfolioData(data: PortfolioData): void {
+export async function savePortfolioData(portfolioData: PortfolioData): Promise<void> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const { error } = await supabase
+      .from(TABLE)
+      .upsert({ id: ROW_ID, data: portfolioData }, { onConflict: "id" });
+
+    if (error) throw error;
   } catch (e) {
     console.error("Failed to save portfolio data:", e);
+    throw e;
   }
 }
 
-export function resetPortfolioData(): void {
-  localStorage.removeItem(STORAGE_KEY);
+export async function resetPortfolioData(): Promise<void> {
+  await savePortfolioData(defaultData);
 }
