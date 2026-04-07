@@ -105,7 +105,7 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
   if (!data) return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#0a0a0b" }}>
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: accent, borderTopColor: "transparent" }} />
+        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#22c55e", borderTopColor: "transparent" }} />
         <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>loading...</p>
       </div>
     </div>
