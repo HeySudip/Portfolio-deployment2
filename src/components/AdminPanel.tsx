@@ -45,17 +45,21 @@ export default function AdminPanel({ onNavigateBack }: { onNavigateBack: () => v
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setData(getPortfolioData());
+    getPortfolioData().then(setData);
   }, []);
 
-  const handleSave = () => {
-    savePortfolioData(data);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    try {
+      await savePortfolioData(data);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      alert("Failed to save. Check your connection.");
+    }
   };
 
-  const handleReset = () => {
-    resetPortfolioData();
+  const handleReset = async () => {
+    await resetPortfolioData();
     setData(defaultData);
     setShowResetConfirm(false);
   };
