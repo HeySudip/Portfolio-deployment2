@@ -92,37 +92,59 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
-    getPortfolioData().then(setData).catch(() => setData(defaultData));
+    getPortfolioData().then((d) => {
+      setData(d);
+      if (d.themeSetting === "dark" || d.themeSetting === "light") {
+        setTheme(d.themeSetting);
+      } else if (d.themeSetting === "auto") {
+        setTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      }
+    }).catch(() => setData(defaultData));
   }, []);
 
   if (!data) return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#0a0a0b" }}>
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#22c55e", borderTopColor: "transparent" }} />
+        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: accent, borderTopColor: "transparent" }} />
         <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>loading...</p>
       </div>
     </div>
   );
 
   const isDark = theme === "dark";
+  const accent = data.accentColor || "#22c55e";
+  const fontClass = data.fontStyle === "sans" ? "font-sans" : data.fontStyle === "serif" ? "font-serif" : "font-mono";
 
   return (
     <div
-      className="min-h-screen relative"
+      className={`min-h-screen relative ${fontClass}`}
       style={{
         backgroundColor: isDark ? "#0a0a0b" : "#f5f0eb",
+        ["--accent" as string]: accent,
       }}
     >
-      {/* Paper texture background */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundImage: `url(${bgTexture})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: isDark ? 0.15 : 0.4,
-        }}
-      />
+      {/* Background image (custom) or paper texture */}
+      {data.bgImageUrl ? (
+        <div
+          className="fixed inset-0 z-0"
+          style={{
+            backgroundImage: `url(${data.bgImageUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: isDark ? 0.18 : 0.35,
+          }}
+        />
+      ) : (
+        <div
+          className="fixed inset-0 z-0"
+          style={{
+            backgroundImage: `url(${bgTexture})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: isDark ? 0.15 : 0.4,
+          }}
+        />
+      )}
 
       {/* Main card */}
       <div className="relative z-10 min-h-screen flex items-start justify-center px-4 py-8 md:py-16">
@@ -192,7 +214,7 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                     <div
                       className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2"
                       style={{
-                        backgroundColor: "#22c55e",
+                        backgroundColor: accent,
                         borderColor: isDark ? "#111113" : "#ffffff",
                       }}
                     />
@@ -348,7 +370,7 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                             >
                               {exp.company}
                             </h3>
-                            <p className="text-sm" style={{ color: "#22c55e" }}>
+                            <p className="text-sm" style={{ color: accent }}>
                               {exp.role}
                             </p>
                           </div>
@@ -380,7 +402,7 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                               className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md"
                               style={{
                                 backgroundColor: "rgba(34,197,94,0.1)",
-                                color: "#22c55e",
+                                color: accent,
                                 border: "1px solid rgba(34,197,94,0.15)",
                               }}
                             >
@@ -419,7 +441,7 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                         >
                           {edu.institution}
                         </h3>
-                        <p className="text-sm" style={{ color: "#22c55e" }}>
+                        <p className="text-sm" style={{ color: accent }}>
                           {edu.degree}
                         </p>
                         <div className="flex items-center gap-3 mt-2">
@@ -574,7 +596,7 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                   <div className="flex items-center gap-1.5">
                     <span
                       className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
-                      style={{ backgroundColor: "#22c55e" }}
+                      style={{ backgroundColor: accent }}
                     />
                     <span
                       className="text-[11px] font-mono"

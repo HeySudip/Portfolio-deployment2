@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   AlertTriangle,
+  Palette,
 } from "lucide-react";
 import {
   getPortfolioData,
@@ -31,7 +32,7 @@ import {
   type SocialLink,
 } from "../store/portfolioData";
 
-type Tab = "profile" | "experience" | "education" | "projects" | "tech" | "socials";
+type Tab = "profile" | "experience" | "education" | "projects" | "tech" | "socials" | "appearance";
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -81,6 +82,7 @@ export default function AdminPanel({ onNavigateBack }: { onNavigateBack: () => v
     { id: "projects", label: "Projects", icon: <FolderOpen size={16} /> },
     { id: "tech", label: "Tech Stack", icon: <Code2 size={16} /> },
     { id: "socials", label: "Socials", icon: <Link2 size={16} /> },
+    { id: "appearance", label: "Appearance", icon: <Palette size={16} /> },
   ];
 
   // Project helpers
@@ -671,6 +673,8 @@ export default function AdminPanel({ onNavigateBack }: { onNavigateBack: () => v
                       <option value="github">GitHub</option>
                       <option value="twitter">Twitter / X</option>
                       <option value="linkedin">LinkedIn</option>
+                      <option value="telegram">Telegram</option>
+                      <option value="reddit">Reddit</option>
                       <option value="mail">Email</option>
                     </select>
                   </div>
@@ -684,6 +688,120 @@ export default function AdminPanel({ onNavigateBack }: { onNavigateBack: () => v
               <Plus size={16} />
               Add Social Link
             </button>
+          </div>
+        )}
+
+        {/* Appearance Tab */}
+        {activeTab === "appearance" && (
+          <div className="space-y-6">
+            {/* Theme */}
+            <SectionCard title="Theme">
+              <div className="grid grid-cols-3 gap-3">
+                {(["dark", "light", "auto"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setData({ ...data, themeSetting: t })}
+                    className="py-3 rounded-xl text-sm font-mono capitalize transition-all"
+                    style={{
+                      backgroundColor: (data.themeSetting ?? "dark") === t ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.03)",
+                      border: (data.themeSetting ?? "dark") === t ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                      color: (data.themeSetting ?? "dark") === t ? "#22c55e" : "rgba(255,255,255,0.5)",
+                    }}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </SectionCard>
+
+            {/* Accent Color */}
+            <SectionCard title="Accent Color">
+              <div className="space-y-3">
+                <div className="grid grid-cols-6 gap-2">
+                  {["#22c55e","#3b82f6","#a855f7","#f59e0b","#ef4444","#ec4899"].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setData({ ...data, accentColor: c })}
+                      className="w-full aspect-square rounded-xl transition-all"
+                      style={{
+                        backgroundColor: c,
+                        outline: (data.accentColor ?? "#22c55e") === c ? `3px solid ${c}` : "3px solid transparent",
+                        outlineOffset: "2px",
+                        opacity: (data.accentColor ?? "#22c55e") === c ? 1 : 0.6,
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-dark-400 text-xs font-mono uppercase tracking-wider">Custom</label>
+                  <input
+                    type="color"
+                    value={data.accentColor ?? "#22c55e"}
+                    onChange={(e) => setData({ ...data, accentColor: e.target.value })}
+                    className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
+                  />
+                  <span className="text-dark-400 text-xs font-mono">{data.accentColor ?? "#22c55e"}</span>
+                </div>
+              </div>
+            </SectionCard>
+
+            {/* Font Style */}
+            <SectionCard title="Font Style">
+              <div className="grid grid-cols-3 gap-3">
+                {([
+                  { id: "mono", label: "Monospace", preview: "ABC abc" },
+                  { id: "sans", label: "Sans-Serif", preview: "ABC abc" },
+                  { id: "serif", label: "Serif", preview: "ABC abc" },
+                ] as const).map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setData({ ...data, fontStyle: f.id })}
+                    className="py-3 px-2 rounded-xl transition-all text-center"
+                    style={{
+                      backgroundColor: (data.fontStyle ?? "mono") === f.id ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.03)",
+                      border: (data.fontStyle ?? "mono") === f.id ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                      color: (data.fontStyle ?? "mono") === f.id ? "#22c55e" : "rgba(255,255,255,0.5)",
+                      fontFamily: f.id === "mono" ? "monospace" : f.id === "serif" ? "Georgia, serif" : "system-ui, sans-serif",
+                    }}
+                  >
+                    <p className="text-xs mb-1">{f.preview}</p>
+                    <p className="text-[10px] opacity-70">{f.label}</p>
+                  </button>
+                ))}
+              </div>
+            </SectionCard>
+
+            {/* Background Image */}
+            <SectionCard title="Background Image">
+              <div className="space-y-3">
+                <InputField
+                  label="Image URL"
+                  value={data.bgImageUrl ?? ""}
+                  onChange={(v) => setData({ ...data, bgImageUrl: v })}
+                  placeholder="https://... (leave blank for default texture)"
+                />
+                {data.bgImageUrl && (
+                  <div className="relative rounded-xl overflow-hidden" style={{ height: "100px" }}>
+                    <img
+                      src={data.bgImageUrl}
+                      alt="Background preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <button
+                      onClick={() => setData({ ...data, bgImageUrl: "" })}
+                      className="absolute top-2 right-2 p-1.5 rounded-lg"
+                      style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#fff" }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+                <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  Paste any direct image URL (Unsplash, etc). Shows as a subtle texture behind the card.
+                </p>
+              </div>
+            </SectionCard>
           </div>
         )}
 
@@ -791,13 +909,17 @@ function TagInput({
 }) {
   const [input, setInput] = useState("");
 
+  const addTag = () => {
+    if (input.trim() && !tags.includes(input.trim())) {
+      onChange([...tags, input.trim()]);
+    }
+    setInput("");
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && input.trim()) {
+    if (e.key === "Enter") {
       e.preventDefault();
-      if (!tags.includes(input.trim())) {
-        onChange([...tags, input.trim()]);
-      }
-      setInput("");
+      addTag();
     }
     if (e.key === "Backspace" && !input && tags.length) {
       onChange(tags.slice(0, -1));
@@ -805,29 +927,53 @@ function TagInput({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 bg-dark-800 border border-dark-700 rounded-xl px-3 py-2.5 min-h-[44px] focus-within:border-accent/50 focus-within:ring-1 focus-within:ring-accent/20 transition-all">
-      {tags.map((tag, i) => (
-        <span
-          key={i}
-          className="flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded-lg bg-dark-700 text-dark-200 border border-dark-600/50"
+    <div>
+      <div className="flex gap-2 mb-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none transition-all"
+          style={{
+            backgroundColor: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "#ffffff",
+          }}
+        />
+        <button
+          onClick={addTag}
+          className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+          style={{
+            background: "linear-gradient(135deg, #22c55e, #16a34a)",
+            color: "#ffffff",
+          }}
         >
-          {tag}
-          <button
-            onClick={() => onChange(tags.filter((_, idx) => idx !== i))}
-            className="text-dark-500 hover:text-red-400 transition-colors ml-0.5"
+          + Add
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {tags.map((tag, i) => (
+          <span
+            key={i}
+            className="flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded-lg"
+            style={{
+              backgroundColor: "rgba(34,197,94,0.1)",
+              border: "1px solid rgba(34,197,94,0.2)",
+              color: "#22c55e",
+            }}
           >
-            <X size={12} />
-          </button>
-        </span>
-      ))}
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={tags.length === 0 ? placeholder : ""}
-        className="flex-1 min-w-[120px] bg-transparent text-dark-200 text-sm placeholder-dark-500 focus:outline-none"
-      />
+            {tag}
+            <button
+              onClick={() => onChange(tags.filter((_, idx) => idx !== i))}
+              className="ml-0.5 hover:text-red-400 transition-colors"
+            >
+              <X size={12} />
+            </button>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
