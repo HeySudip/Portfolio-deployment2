@@ -51,6 +51,10 @@ export interface PortfolioData {
   education: Education[];
   techStack: string[];
   layoutStyle: "name-big" | "title-big";
+  bgImageUrl?: string;
+  accentColor?: string;
+  fontStyle?: "mono" | "sans" | "serif";
+  themeSetting?: "dark" | "light" | "auto";
 }
 
 export const defaultData: PortfolioData = {
@@ -109,6 +113,10 @@ export const defaultData: PortfolioData = {
     },
   ],
   layoutStyle: "title-big",
+  bgImageUrl: "",
+  accentColor: "#22c55e",
+  fontStyle: "mono",
+  themeSetting: "dark",
   techStack: [
     "React", "Next.js", "TypeScript", "Node.js", "Python", "Go", "Rust",
     "PostgreSQL", "MongoDB", "Redis", "Docker", "Kubernetes", "AWS", "Figma"
