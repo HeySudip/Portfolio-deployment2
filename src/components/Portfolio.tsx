@@ -73,18 +73,8 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
   const [data, setData] = useState<PortfolioData | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
-  const refreshData = () => setData(getPortfolioData());
-
   useEffect(() => {
-    refreshData();
-    // Re-read localStorage whenever window gets focus (e.g. coming back from admin)
-    window.addEventListener("focus", refreshData);
-    // Also listen for storage events (cross-tab)
-    window.addEventListener("storage", refreshData);
-    return () => {
-      window.removeEventListener("focus", refreshData);
-      window.removeEventListener("storage", refreshData);
-    };
+    getPortfolioData().then(setData);
   }, []);
 
   if (!data) return null;
