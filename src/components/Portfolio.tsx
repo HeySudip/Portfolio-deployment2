@@ -349,22 +349,33 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                   <p className="text-xs font-mono uppercase tracking-wider mb-3" style={{ color: "rgba(6,182,212,0.6)" }}>
                     recent supporters
                   </p>
-                  <div className="flex flex-col gap-2">
-                    {tipFeed.map((tip: TipEntry) => (
-                      <div
-                        key={tip.tx}
-                        className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono"
-                        style={{
-                          backgroundColor: "rgba(6,182,212,0.05)",
-                          border: "1px solid rgba(6,182,212,0.1)",
-                        }}
-                      >
-                        <div style={{ color: "rgba(255,255,255,0.5)" }}>
-                          <span>{tip.sender.slice(0, 4)}****{tip.sender.slice(-4)}</span>
+                  <div
+                    style={{
+                      maxHeight: "114px",
+                      overflowY: "auto",
+                      borderRadius: "12px",
+                      border: "1px solid rgba(6,182,212,0.12)",
+                      scrollbarWidth: "thin",
+                      scrollbarColor: "rgba(6,182,212,0.3) transparent",
+                    }}
+                  >
+                    <div className="flex flex-col">
+                      {tipFeed.map((tip: TipEntry, i: number) => (
+                        <div
+                          key={tip.tx}
+                          className="flex items-center justify-between px-3 py-2 text-xs font-mono"
+                          style={{
+                            backgroundColor: i % 2 === 0 ? "rgba(6,182,212,0.04)" : "rgba(6,182,212,0.02)",
+                            borderBottom: i < tipFeed.length - 1 ? "1px solid rgba(6,182,212,0.07)" : "none",
+                          }}
+                        >
+                          <span style={{ color: "rgba(255,255,255,0.5)" }}>
+                            {tip.sender.slice(0, 4)}****{tip.sender.slice(-4)}
+                          </span>
+                          <span style={{ color: "#06b6d4", fontWeight: 700, flexShrink: 0, marginLeft: "8px" }}>{tip.amount} SOL</span>
                         </div>
-                        <span style={{ color: "#06b6d4", fontWeight: 700, flexShrink: 0, marginLeft: "8px" }}>{tip.amount} SOL</span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </motion.div>
               )}
