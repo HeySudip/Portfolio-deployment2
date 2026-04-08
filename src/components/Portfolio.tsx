@@ -6,7 +6,7 @@ import {
   Settings,
 } from "lucide-react";
 const TipModal = lazy(() => import("./TipModal"));
-import { useTipFeed } from "./TipModal";
+import { useTipFeed, type TipEntry } from "./TipModal";
 import { getPortfolioData, defaultData, type PortfolioData, type SocialLink } from "../store/portfolioData";
 import bgTexture from "../assets/bg-texture.jpg";
 
@@ -350,7 +350,7 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                     recent supporters
                   </p>
                   <div className="flex flex-col gap-2">
-                    {tipFeed.map((tip) => (
+                    {tipFeed.map((tip: TipEntry) => (
                       <div
                         key={tip.tx}
                         className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono"
@@ -359,11 +359,11 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                           border: "1px solid rgba(6,182,212,0.1)",
                         }}
                       >
-                        <span style={{ color: "rgba(255,255,255,0.5)" }}>
-                          {tip.sender.slice(0, 4)}****{tip.sender.slice(-4)}
+                        <div style={{ color: "rgba(255,255,255,0.5)" }}>
+                          <span>{tip.sender.slice(0, 4)}****{tip.sender.slice(-4)}</span>
                           {tip.message && <span style={{ color: "rgba(255,255,255,0.3)" }}> · "{tip.message}"</span>}
-                        </span>
-                        <span style={{ color: "#06b6d4", fontWeight: 700 }}>{tip.amount} SOL</span>
+                        </div>
+                        <span style={{ color: "#06b6d4", fontWeight: 700, flexShrink: 0, marginLeft: "8px" }}>{tip.amount} SOL</span>
                       </div>
                     ))}
                   </div>

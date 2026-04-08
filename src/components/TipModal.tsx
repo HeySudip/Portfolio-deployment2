@@ -8,10 +8,11 @@ import {
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { WalletModalProvider, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, Connection } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import { X } from "lucide-react";
 import emailjs from "@emailjs/browser";
+import { supabase } from "../store/supabase";
 
 const RECIPIENT = "7sbFzwdXHouwVkZkyXyAjmSJDRTg5iyEdoPxmo9CN7H7";
 const CYAN = "#06b6d4";
@@ -26,34 +27,45 @@ const PRESETS = [
   { sol: 0.1, label: "5 coffees", emoji: "🔥" },
 ];
 
-function blurAddress(addr: string) {
-  return addr.slice(0, 4) + "****" + addr.slice(-4);
-}
-
-// Recent tips feed
 export type TipEntry = {
+  id?: number;
   sender: string;
   amount: number;
   message: string;
   tx: string;
-  time: number;
+  created_at?: string;
 };
 
-// Shared in-memory store (simple, no persistence needed for live session)
-let globalTips: TipEntry[] = [];
-let tipListeners: ((tips: TipEntry[]) => void)[] = [];
+export async function fetchTips(): Promise<TipEntry[]> {
+  const { data } = await supabase
+    .from("tips")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(10);
+  return (data as TipEntry[]) || [];
+}
 
-function addTip(tip: TipEntry) {
-  globalTips = [tip, ...globalTips.slice(0, 9)];
-  tipListeners.forEach((l) => l([...globalTips]));
+async function saveTip(tip: Omit<TipEntry, "id" | "created_at">) {
+  await supabase.from("tips").insert(tip);
 }
 
 export function useTipFeed() {
-  const [tips, setTips] = useState<TipEntry[]>([...globalTips]);
+  const [tips, setTips] = useState<TipEntry[]>([]);
+
   useEffect(() => {
-    tipListeners.push(setTips);
-    return () => { tipListeners = tipListeners.filter((l) => l !== setTips); };
+    fetchTips().then(setTips);
+
+    // Realtime subscription
+    const channel = supabase
+      .channel("tips-feed")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "tips" }, (payload) => {
+        setTips((prev) => [payload.new as TipEntry, ...prev.slice(0, 9)]);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
+
   return tips;
 }
 
@@ -64,7 +76,7 @@ function TipForm({ onClose }: { onClose: () => void }) {
   const [custom, setCustom] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<TipEntry | null>(null);
+  const [success, setSuccess] = useState<Omit<TipEntry, "id" | "created_at"> | null>(null);
   const [error, setError] = useState("");
 
   const final = custom.trim() !== "" ? parseFloat(custom) : amount;
@@ -88,16 +100,15 @@ function TipForm({ onClose }: { onClose: () => void }) {
       const sig = await sendTransaction(tx, connection, { skipPreflight: false, preflightCommitment: "confirmed" });
       await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
 
-      const tip: TipEntry = {
+      const tip: Omit<TipEntry, "id" | "created_at"> = {
         sender: publicKey.toBase58(),
         amount: finalAmt,
         message: message.trim(),
         tx: sig,
-        time: Date.now(),
       };
 
-      // Add to live feed
-      addTip(tip);
+      // Save to Supabase (realtime will update feed for everyone)
+      await saveTip(tip);
 
       // Send email notification
       emailjs.send(
@@ -112,7 +123,7 @@ function TipForm({ onClose }: { onClose: () => void }) {
         EMAILJS_PUBLIC_KEY
       ).catch(() => {}); // silent fail — don't block success
 
-      setSuccess(tip);
+      setSuccess({ ...tip });
       setMessage("");
       setCustom("");
     } catch (e: unknown) {
