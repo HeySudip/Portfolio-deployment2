@@ -56,10 +56,8 @@ function TipForm({ onClose }: { onClose: () => void }) {
       const msg = e instanceof Error ? e.message : "";
       if (msg.includes("rejected") || msg.includes("User rejected")) {
         setError("Cancelled.");
-      } else if (msg.includes("insufficient")) {
-        setError("Insufficient balance.");
       } else {
-        setError("Transaction failed. Check your wallet has enough SOL for fees.");
+        setError(msg.slice(0, 120) || "Transaction failed.");
       }
     } finally {
       setLoading(false);
@@ -209,7 +207,7 @@ function TipForm({ onClose }: { onClose: () => void }) {
 export default function TipModal({ onClose }: { onClose: () => void }) {
   const network = WalletAdapterNetwork.Mainnet;
   // Using reliable public RPC instead of rate-limited default
-  const endpoint = useMemo(() => "https://solana-mainnet.g.alchemy.com/v2/demo", [network]);
+  const endpoint = useMemo(() => "https://mainnet.helius-rpc.com/?api-key=77582c7a-e21b-40ec-9c88-8fea68aef115", []);
   const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
 
   return (
