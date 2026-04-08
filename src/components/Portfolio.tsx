@@ -361,7 +361,6 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                       >
                         <div style={{ color: "rgba(255,255,255,0.5)" }}>
                           <span>{tip.sender.slice(0, 4)}****{tip.sender.slice(-4)}</span>
-                          {tip.message && <span style={{ color: "rgba(255,255,255,0.3)" }}> · "{tip.message}"</span>}
                         </div>
                         <span style={{ color: "#06b6d4", fontWeight: 700, flexShrink: 0, marginLeft: "8px" }}>{tip.amount} SOL</span>
                       </div>
