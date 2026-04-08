@@ -45,15 +45,21 @@ function TipForm({ onClose }: { onClose: () => void }) {
           lamports: Math.floor(final * LAMPORTS_PER_SOL),
         })
       );
-      const { blockhash } = await connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
       tx.recentBlockhash = blockhash;
       tx.feePayer = publicKey;
-      const sig = await sendTransaction(tx, connection);
-      await connection.confirmTransaction(sig, "confirmed");
+      const sig = await sendTransaction(tx, connection, { skipPreflight: false, preflightCommitment: "confirmed" });
+      await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
       setSuccess(sig);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "";
-      setError(msg.includes("rejected") ? "Cancelled." : "Transaction failed. Try again.");
+      if (msg.includes("rejected") || msg.includes("User rejected")) {
+        setError("Cancelled.");
+      } else if (msg.includes("insufficient")) {
+        setError("Insufficient balance.");
+      } else {
+        setError("Transaction failed. Check your wallet has enough SOL for fees.");
+      }
     } finally {
       setLoading(false);
     }
@@ -201,7 +207,8 @@ function TipForm({ onClose }: { onClose: () => void }) {
 
 export default function TipModal({ onClose }: { onClose: () => void }) {
   const network = WalletAdapterNetwork.Mainnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  // Using reliable public RPC instead of rate-limited default
+  const endpoint = useMemo(() => "https://solana-mainnet.g.alchemy.com/v2/demo", [network]);
   const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
 
   return (
