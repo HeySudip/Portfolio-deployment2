@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { motion, type Variants } from "framer-motion";
 import {
   ExternalLink,
   ArrowUpRight,
   Settings,
 } from "lucide-react";
+const TipModal = lazy(() => import("./TipModal"));
 import { getPortfolioData, defaultData, type PortfolioData, type SocialLink } from "../store/portfolioData";
 import bgTexture from "../assets/bg-texture.jpg";
 
@@ -90,6 +91,7 @@ const item: Variants = {
 export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () => void }) {
   const [data, setData] = useState<PortfolioData | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [showTip, setShowTip] = useState(false);
 
   useEffect(() => {
     getPortfolioData().then((d) => {
@@ -284,7 +286,7 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                 </div>
 
                 {/* Social icons */}
-                <div className="flex items-center gap-2.5 mt-5">
+                <div className="flex items-center gap-2.5 mt-5 flex-wrap">
                   {data.socials.map((social: SocialLink) => (
                     <a
                       key={social.platform}
@@ -308,7 +310,35 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                       {iconMap[social.icon] || <ExternalLink size={20} />}
                     </a>
                   ))}
+                  {/* Buy me a coffee button */}
+                  <button
+                    onClick={() => setShowTip(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all duration-300 hover:scale-105"
+                    style={{
+                      background: "rgba(6,182,212,0.1)",
+                      border: "1px solid rgba(6,182,212,0.25)",
+                      color: "#06b6d4",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(6,182,212,0.18)";
+                      e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(6,182,212,0.1)";
+                      e.currentTarget.style.borderColor = "rgba(6,182,212,0.25)";
+                    }}
+                    title="Buy me a coffee"
+                  >
+                    ☕ <span>tip SOL</span>
+                  </button>
                 </div>
+
+                {/* Tip Modal */}
+                {showTip && (
+                  <Suspense fallback={null}>
+                    <TipModal onClose={() => setShowTip(false)} />
+                  </Suspense>
+                )}
               </motion.div>
 
               {/* Divider */}
