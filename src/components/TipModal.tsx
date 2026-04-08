@@ -31,10 +31,11 @@ function TipForm({ onClose }: { onClose: () => void }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const final = custom ? parseFloat(custom) : amount;
+  const final = custom.trim() !== "" ? parseFloat(custom) : amount;
 
   const send = useCallback(async () => {
-    if (!publicKey || !final || final <= 0) return;
+    const finalAmt = custom.trim() !== "" ? parseFloat(custom) : amount;
+    if (!publicKey || !finalAmt || finalAmt <= 0) return;
     setLoading(true);
     setError("");
     try {
@@ -42,7 +43,7 @@ function TipForm({ onClose }: { onClose: () => void }) {
         SystemProgram.transfer({
           fromPubkey: publicKey,
           toPubkey: new PublicKey(RECIPIENT),
-          lamports: Math.floor(final * LAMPORTS_PER_SOL),
+          lamports: Math.floor(finalAmt * LAMPORTS_PER_SOL),
         })
       );
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
@@ -63,7 +64,7 @@ function TipForm({ onClose }: { onClose: () => void }) {
     } finally {
       setLoading(false);
     }
-  }, [publicKey, final, connection, sendTransaction]);
+  }, [publicKey, amount, custom, connection, sendTransaction]);
 
   return (
     <div style={{ padding: "24px" }}>
