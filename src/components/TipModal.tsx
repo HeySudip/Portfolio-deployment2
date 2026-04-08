@@ -100,6 +100,12 @@ function TipForm({ onClose }: { onClose: () => void }) {
       const sig = await sendTransaction(tx, connection, { skipPreflight: false, preflightCommitment: "confirmed" });
       await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
 
+      // Verify tx actually succeeded on-chain (confirmTransaction doesn't catch on-chain errors)
+      const txDetails = await connection.getTransaction(sig, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
+      if (!txDetails || txDetails.meta?.err !== null) {
+        throw new Error("Transaction failed on-chain. No SOL was sent.");
+      }
+
       const tip: Omit<TipEntry, "id" | "created_at"> = {
         sender: publicKey.toBase58(),
         amount: finalAmt,
