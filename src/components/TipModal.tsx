@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -8,18 +8,54 @@ import {
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { WalletModalProvider, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { clusterApiUrl, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, Connection } from "@solana/web3.js";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import { X } from "lucide-react";
+import emailjs from "@emailjs/browser";
 
 const RECIPIENT = "7sbFzwdXHouwVkZkyXyAjmSJDRTg5iyEdoPxmo9CN7H7";
 const CYAN = "#06b6d4";
+const HELIUS_RPC = "https://mainnet.helius-rpc.com/?api-key=77582c7a-e21b-40ec-9c88-8fea68aef115";
+const EMAILJS_SERVICE = "service_oaxhgqt";
+const EMAILJS_TEMPLATE = "template_8keri5q";
+const EMAILJS_PUBLIC_KEY = "5AV24pyq_o2NYbwzU";
 
 const PRESETS = [
   { sol: 0.01, label: "1 coffee", emoji: "☕" },
   { sol: 0.05, label: "3 coffees", emoji: "🚀" },
   { sol: 0.1, label: "5 coffees", emoji: "🔥" },
 ];
+
+function blurAddress(addr: string) {
+  return addr.slice(0, 4) + "****" + addr.slice(-4);
+}
+
+// Recent tips feed
+export type TipEntry = {
+  sender: string;
+  amount: number;
+  message: string;
+  tx: string;
+  time: number;
+};
+
+// Shared in-memory store (simple, no persistence needed for live session)
+let globalTips: TipEntry[] = [];
+let tipListeners: ((tips: TipEntry[]) => void)[] = [];
+
+function addTip(tip: TipEntry) {
+  globalTips = [tip, ...globalTips.slice(0, 9)];
+  tipListeners.forEach((l) => l([...globalTips]));
+}
+
+export function useTipFeed() {
+  const [tips, setTips] = useState<TipEntry[]>([...globalTips]);
+  useEffect(() => {
+    tipListeners.push(setTips);
+    return () => { tipListeners = tipListeners.filter((l) => l !== setTips); };
+  }, []);
+  return tips;
+}
 
 function TipForm({ onClose }: { onClose: () => void }) {
   const { connection } = useConnection();
@@ -28,7 +64,7 @@ function TipForm({ onClose }: { onClose: () => void }) {
   const [custom, setCustom] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] = useState<TipEntry | null>(null);
   const [error, setError] = useState("");
 
   const final = custom.trim() !== "" ? parseFloat(custom) : amount;
@@ -51,7 +87,34 @@ function TipForm({ onClose }: { onClose: () => void }) {
       tx.feePayer = publicKey;
       const sig = await sendTransaction(tx, connection, { skipPreflight: false, preflightCommitment: "confirmed" });
       await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
-      setSuccess(sig);
+
+      const tip: TipEntry = {
+        sender: publicKey.toBase58(),
+        amount: finalAmt,
+        message: message.trim(),
+        tx: sig,
+        time: Date.now(),
+      };
+
+      // Add to live feed
+      addTip(tip);
+
+      // Send email notification
+      emailjs.send(
+        EMAILJS_SERVICE,
+        EMAILJS_TEMPLATE,
+        {
+          amount: `${finalAmt} SOL`,
+          sender: publicKey.toBase58(),
+          tx_hash: sig,
+          tip_message: message.trim() || "(no message)",
+        },
+        EMAILJS_PUBLIC_KEY
+      ).catch(() => {}); // silent fail — don't block success
+
+      setSuccess(tip);
+      setMessage("");
+      setCustom("");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "";
       if (msg.includes("rejected") || msg.includes("User rejected")) {
@@ -62,7 +125,7 @@ function TipForm({ onClose }: { onClose: () => void }) {
     } finally {
       setLoading(false);
     }
-  }, [publicKey, amount, custom, connection, sendTransaction]);
+  }, [publicKey, amount, custom, message, connection, sendTransaction]);
 
   return (
     <div style={{ padding: "24px" }}>
@@ -87,9 +150,12 @@ function TipForm({ onClose }: { onClose: () => void }) {
       {success ? (
         <div style={{ textAlign: "center", padding: "20px 0" }}>
           <div style={{ fontSize: "44px", marginBottom: "12px" }}>🎉</div>
-          <p style={{ color: CYAN, fontWeight: 700, marginBottom: "8px" }}>thank you so much!</p>
+          <p style={{ color: CYAN, fontWeight: 700, marginBottom: "4px" }}>thank you so much!</p>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "16px", fontFamily: "monospace" }}>
+            {success.amount} SOL sent · notification sent to owner
+          </p>
           <a
-            href={`https://solscan.io/tx/${success}`}
+            href={`https://solscan.io/tx/${success.tx}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ fontSize: "11px", color: CYAN, fontFamily: "monospace" }}
@@ -205,9 +271,6 @@ function TipForm({ onClose }: { onClose: () => void }) {
 }
 
 export default function TipModal({ onClose }: { onClose: () => void }) {
-  const network = WalletAdapterNetwork.Mainnet;
-  // Using reliable public RPC instead of rate-limited default
-  const endpoint = useMemo(() => "https://mainnet.helius-rpc.com/?api-key=77582c7a-e21b-40ec-9c88-8fea68aef115", []);
   const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
 
   return (
@@ -231,7 +294,7 @@ export default function TipModal({ onClose }: { onClose: () => void }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <ConnectionProvider endpoint={endpoint}>
+        <ConnectionProvider endpoint={HELIUS_RPC}>
           <WalletProvider wallets={wallets} autoConnect>
             <WalletModalProvider>
               <TipForm onClose={onClose} />

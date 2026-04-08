@@ -6,6 +6,7 @@ import {
   Settings,
 } from "lucide-react";
 const TipModal = lazy(() => import("./TipModal"));
+import { useTipFeed } from "./TipModal";
 import { getPortfolioData, defaultData, type PortfolioData, type SocialLink } from "../store/portfolioData";
 import bgTexture from "../assets/bg-texture.jpg";
 
@@ -92,6 +93,7 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
   const [data, setData] = useState<PortfolioData | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [showTip, setShowTip] = useState(false);
+  const tipFeed = useTipFeed();
 
   useEffect(() => {
     getPortfolioData().then((d) => {
@@ -340,6 +342,33 @@ export default function Portfolio({ onNavigateAdmin }: { onNavigateAdmin?: () =>
                   </Suspense>
                 )}
               </motion.div>
+
+              {/* Live tip feed */}
+              {tipFeed.length > 0 && (
+                <motion.div variants={item} className="mb-8">
+                  <p className="text-xs font-mono uppercase tracking-wider mb-3" style={{ color: "rgba(6,182,212,0.6)" }}>
+                    recent supporters
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {tipFeed.map((tip) => (
+                      <div
+                        key={tip.tx}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono"
+                        style={{
+                          backgroundColor: "rgba(6,182,212,0.05)",
+                          border: "1px solid rgba(6,182,212,0.1)",
+                        }}
+                      >
+                        <span style={{ color: "rgba(255,255,255,0.5)" }}>
+                          {tip.sender.slice(0, 4)}****{tip.sender.slice(-4)}
+                          {tip.message && <span style={{ color: "rgba(255,255,255,0.3)" }}> · "{tip.message}"</span>}
+                        </span>
+                        <span style={{ color: "#06b6d4", fontWeight: 700 }}>{tip.amount} SOL</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Divider */}
               <motion.div variants={item} className="mb-10">
