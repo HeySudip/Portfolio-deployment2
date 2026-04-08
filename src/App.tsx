@@ -5,7 +5,7 @@ import ChatWidget from "./components/ChatWidget";
 
 type View = "portfolio" | "admin" | "passcode";
 
-const ADMIN_PASSCODE = "7643";
+const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || "7643";
 
 export default function App() {
   const [view, setView] = useState<View>("portfolio");
